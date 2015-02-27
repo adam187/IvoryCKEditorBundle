@@ -48,7 +48,7 @@ class CKEditorHelper extends Helper
      */
     public function renderBasePath($basePath)
     {
-        return $this->fixPath($this->getAssetsHelper()->getUrl($basePath));
+        return $this->fixPath($this->getAssetUrl($basePath));
     }
 
     /**
@@ -60,7 +60,7 @@ class CKEditorHelper extends Helper
      */
     public function renderJsPath($jsPath)
     {
-        return $this->getAssetsHelper()->getUrl($jsPath);
+        return $this->getAssetUrl($jsPath);
     }
 
     /**
@@ -127,7 +127,7 @@ class CKEditorHelper extends Helper
         return sprintf(
             'CKEDITOR.plugins.addExternal("%s", "%s", "%s");',
             $name,
-            $this->fixPath($this->getAssetsHelper()->getUrl($plugin['path'])),
+            $this->fixPath($this->getAssetUrl($plugin['path'])),
             $plugin['filename']
         );
     }
@@ -166,7 +166,7 @@ class CKEditorHelper extends Helper
     {
         if (isset($template['imagesPath'])) {
             $template['imagesPath'] = $this->fixPath(
-                $this->getAssetsHelper()->getUrl($template['imagesPath'])
+                $this->getAssetUrl($template['imagesPath'])
             );
         }
 
@@ -215,7 +215,7 @@ class CKEditorHelper extends Helper
 
             $config['contentsCss'] = array();
             foreach ($cssContents as $cssContent) {
-                $config['contentsCss'][] = $this->fixPath($this->getAssetsHelper()->getUrl($cssContent));
+                $config['contentsCss'][] = $this->fixPath($this->getAssetUrl($cssContent));
             }
         }
 
@@ -321,13 +321,24 @@ class CKEditorHelper extends Helper
     }
 
     /**
-     * Gets the assets helper.
+     * Returns the public path.
      *
-     * @return \Symfony\Component\Templating\Helper\CoreAssetsHelper The assets helper.
+     * Absolute paths (i.e. http://...) are returned unmodified.
+     *
+     * @param string $path        A public path
+     * @param string $packageName The name of the asset package to use
+     *
+     * @return string A public path which takes into account the base path and URL path
      */
-    private function getAssetsHelper()
+    private function getAssetUrl($path, $packageName = null)
     {
-        return $this->container->get('templating.helper.assets');
+        if ($this->container->has('templating.helper.assets')) {
+            return $this->container->get('templating.helper.assets')->getUrl($path, $packageName);
+        } elseif ($this->container->has('assets.packages')) {
+            return $this->container->get('assets.packages')->getUrl($path, $packageName);
+        }
+
+        throw new \Exception('Could not generate asset url');
     }
 
     /**
